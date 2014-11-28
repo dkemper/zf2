@@ -137,6 +137,11 @@ class PhpRenderer implements Renderer, TreeRendererInterface
     private $__pluginCache = array();
 
     /**
+     * @var array Cache of shared plugins
+     */
+    private $__sharedPluginCache = array();
+
+    /**
      * Constructor.
      *
      *
@@ -394,7 +399,14 @@ class PhpRenderer implements Renderer, TreeRendererInterface
     {
         if (!isset($this->__pluginCache[$method])) {
             $this->__pluginCache[$method] = $this->plugin($method);
+            $this->__sharedPluginCache[$method] = $this->getHelperPluginManager()->isShared($method);
         }
+
+        if ($this->__sharedPluginCache[$method] === false) {
+            // shared instances are not allowed to cache
+            return call_user_func_array($this->plugin($method), $argv);
+        }
+
         if (is_callable($this->__pluginCache[$method])) {
             return call_user_func_array($this->__pluginCache[$method], $argv);
         }
